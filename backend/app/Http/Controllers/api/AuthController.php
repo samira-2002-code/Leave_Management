@@ -33,7 +33,7 @@ class AuthController extends Controller
             'message' => 'Connexion réussie.',
             'user' => $result['user'],
             'token' => $result['token'],
-        ]);
+        ], 200);
     }
 
     public function profile(Request $request): JsonResponse
@@ -41,7 +41,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => $request->user()->load('department'),
             'roles' => $request->user()->getRoleNames(),
-        ]);
+        ], 200);
     }
 
     public function logout(Request $request): JsonResponse
@@ -50,6 +50,6 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Déconnexion réussie.',
-        ]);
+        ], 200);
     }
 }
