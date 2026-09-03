@@ -23,13 +23,13 @@ class LeaveType extends Model
         'default_days' => 'decimal:2',
     ];
 
-    public function leaveBalances()
-    {
-        return $this->hasMany(LeaveBalance::class);
-    }
-
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function leaveBalances()
+    {
+        return $this->hasMany(LeaveBalance::class);
     }
 }

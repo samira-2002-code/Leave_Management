@@ -28,3 +28,4 @@ class LeaveBalanceController extends Controller
         ]);
     }
 }
+

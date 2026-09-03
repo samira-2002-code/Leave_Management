@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class LeaveRequest extends Model
 {
@@ -53,13 +53,8 @@ class LeaveRequest extends Model
         return $this->belongsTo(User::class, 'hr_id');
     }
 
-    public function replacement()
+    public function replacementUser()
     {
         return $this->belongsTo(User::class, 'replacement_user_id');
-    }
-
-    public function histories()
-    {
-        return $this->hasMany(RequestHistory::class);
     }
 }
