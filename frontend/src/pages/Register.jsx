@@ -11,7 +11,7 @@ function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
- 
+  const [form, setForm] = useState({
     name: "",
     department_id: "",
     email: "",
