@@ -2,28 +2,43 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLeaveRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            'leave_type_id' => ['required', 'exists:leave_types,id'],
+
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+
+            'duration' => ['required', 'numeric', 'min:0.5'],
+
+            'period' => ['required', 'in:full_day,morning,afternoon'],
+
+            'reason' => ['nullable', 'string'],
+
+            'attachment' => [
+                'nullable',
+                'string',
+            ],
+
+            'replacement_user_id' => [
+                'nullable',
+                'exists:users,id',
+            ],
+
+            'catch_up_date' => [
+                'nullable',
+                'date',
+            ],
         ];
     }
 }
