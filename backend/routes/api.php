@@ -5,6 +5,14 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\LeaveBalanceController;
 use App\Http\Controllers\Api\LeaveRequestController;
 
+// HR Controllers
+use App\Http\Controllers\Api\HR\HRDashboardController;
+use App\Http\Controllers\Api\HR\HREmployeeController;
+use App\Http\Controllers\Api\HR\HRLeaveRequestController;
+use App\Http\Controllers\Api\HR\HRLeaveTypeController;
+use App\Http\Controllers\Api\HR\HRLeaveBalanceController;
+
+
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -13,11 +21,11 @@ use App\Http\Controllers\Api\LeaveRequestController;
 
 Route::prefix('auth')->group(function () {
 
-    // Public routes
+    // Public
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
-    // Protected routes
+    // Protected
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/profile', [AuthController::class, 'profile']);
@@ -28,11 +36,17 @@ Route::prefix('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Leave Management
+| Protected Routes
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Employee - Leave Management
+    |--------------------------------------------------------------------------
+    */
 
     // Leave balances
     Route::get('/leave-balances', [
@@ -67,4 +81,78 @@ Route::middleware('auth:sanctum')->group(function () {
         LeaveRequestController::class,
         'reject'
     ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HR
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('hr')->group(function () {
+
+        // Dashboard
+        Route::get('/dashboard', [
+            HRDashboardController::class,
+            'index'
+        ]);
+
+
+        // Employees
+        Route::get('/employees', [
+            HREmployeeController::class,
+            'index'
+        ]);
+
+        Route::get('/employees/{user}', [
+            HREmployeeController::class,
+            'show'
+        ]);
+
+
+        // Leave Requests
+        Route::get('/leave-requests', [
+            HRLeaveRequestController::class,
+            'index'
+        ]);
+
+        Route::get('/leave-requests/{leaveRequest}', [
+            HRLeaveRequestController::class,
+            'show'
+        ]);
+
+
+        // Leave Types
+        Route::get('/leave-types', [
+            HRLeaveTypeController::class,
+            'index'
+        ]);
+
+        Route::post('/leave-types', [
+            HRLeaveTypeController::class,
+            'store'
+        ]);
+
+        Route::put('/leave-types/{leaveType}', [
+            HRLeaveTypeController::class,
+            'update'
+        ]);
+
+        Route::delete('/leave-types/{leaveType}', [
+            HRLeaveTypeController::class,
+            'destroy'
+        ]);
+
+
+        // Leave Balances
+        Route::get('/leave-balances', [
+            HRLeaveBalanceController::class,
+            'index'
+        ]);
+
+        Route::get('/leave-balances/{leaveBalance}', [
+            HRLeaveBalanceController::class,
+            'show'
+        ]);
+    });
 });
