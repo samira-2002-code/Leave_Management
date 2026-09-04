@@ -9,7 +9,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import LeaveRequest from "./pages/LeaveRequest";
+import Requests from "./pages/Requests";
 import Manager from "./pages/Manager";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -31,21 +34,31 @@ function App() {
           element={<Register />}
         />
 
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+        <Route element={<ProtectedRoute />}>
 
-        <Route
-          path="/leave-request"
-          element={<LeaveRequest />}
-        />
+          <Route
+            path="/dashboard"
+            element={<Dashboard />}
+          />
 
-        <Route path="/manager" element={<Manager />} />
+          <Route
+            path="/leave-request"
+            element={<LeaveRequest />}
+          />
+
+          <Route
+            path="/requests"
+            element={<Requests />}
+          />
+
+          <Route
+            path="/manager"
+            element={<Manager />}
+          />
+
+        </Route>
 
       </Routes>
-
-
     </BrowserRouter>
   );
 }
