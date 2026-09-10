@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
   Check,
   Clock3,
   Search,
@@ -21,6 +20,8 @@ function Manager() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const loadRequests = async () => {
     try {
@@ -43,13 +44,13 @@ function Manager() {
   };
 
   useEffect(() => {
-    loadRequests();
+    Promise.resolve().then(loadRequests);
   }, []);
 
   const pendingRequests = useMemo(
     () =>
       requests.filter(
-        (request) => request.status === "pending"
+        (request) => request.status === "pending_manager"
       ),
     [requests]
   );
@@ -82,7 +83,7 @@ function Manager() {
         request.user?.name?.toLowerCase() || "";
 
       const leaveType =
-        request.leave_type?.name?.toLowerCase() || "";
+        request.leaveType?.name?.toLowerCase() || "";
 
       return (
         employeeName.includes(value) ||
@@ -117,13 +118,20 @@ function Manager() {
   };
 
   const handleReject = async (request) => {
+        if (!rejectionReason.trim()) {
+          setError("Un motif de refus est obligatoire.");
+          setProcessing(false);
+          return;
+        }
     try {
       setProcessing(true);
       setError("");
 
       await api.patch(
-        `/leave-requests/${request.id}/reject`
+        `/leave-requests/${request.id}/reject`,
+        { rejection_reason: rejectionReason }
       );
+  setRejectionReason("");
 
       setSelectedRequest(null);
 
@@ -167,7 +175,7 @@ function Manager() {
       {/* HEADER */}
 
       <header className="border-b border-black/10 px-6 md:px-10 py-6">
-        <div className="max-w-[1500px] mx-auto flex items-center justify-between">
+        <div className="max-w-375 mx-auto flex items-center justify-between">
 
           <button
             onClick={() => navigate("/dashboard")}
@@ -181,6 +189,11 @@ function Manager() {
               MANAGER / TIME CONTROL
             </p>
           </button>
+
+          <div className="hidden md:block text-right">
+            <p className="text-xs font-bold">{user.name || "MANAGER"}</p>
+            <p className="text-[9px] tracking-widest text-black/40">{user.email || ""}</p>
+          </div>
 
           <button
             onClick={() => navigate("/dashboard")}
@@ -196,7 +209,7 @@ function Manager() {
 
       {/* MAIN */}
 
-      <main className="max-w-[1500px] mx-auto px-7 md:px-12 lg:px-20 py-16">
+      <main className="max-w-375 mx-auto px-7 md:px-12 lg:px-20 py-16">
 
         {/* TITLE */}
 
@@ -448,7 +461,7 @@ function Manager() {
                     <div>
 
                       <p className="text-[9px] tracking-[0.3em] text-black/35">
-                        {request.leave_type?.name ||
+                        {request.leaveType?.name ||
                           "LEAVE REQUEST"}
                       </p>
 
@@ -514,7 +527,7 @@ function Manager() {
                 ARCHIVE
               </p>
 
-              <h2 className="text-3xl font-black tracking-[-0.05em] mt-3">
+              <h2 className="text-3xl font-black tracking-tighter mt-3">
                 REJECTED TIME
               </h2>
 
@@ -591,7 +604,7 @@ function Manager() {
                   </span>
 
                   <span className="text-sm font-black text-right">
-                    {selectedRequest.leave_type?.name ||
+                    {selectedRequest.leaveType?.name ||
                       "—"}
                   </span>
 
@@ -680,7 +693,7 @@ function Manager() {
 
               {/* ACTIONS */}
 
-              {selectedRequest.status === "pending" && (
+              {selectedRequest.status === "pending_manager" && (
 
                 <div className="grid sm:grid-cols-2 gap-px bg-black/10 mt-10">
 

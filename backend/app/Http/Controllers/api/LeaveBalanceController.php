@@ -8,8 +8,11 @@ use Illuminate\Http\Request;
 
 class LeaveBalanceController extends Controller
 {
+    public function __construct(private \App\Services\LeaveBalanceService $leaveBalanceService) {}
+
     public function index(Request $request): JsonResponse
     {
+        $this->leaveBalanceService->ensureForUser($request->user());
         $balances = $request->user()
             ->leaveBalances()
             ->with('leaveType')
@@ -19,6 +22,7 @@ class LeaveBalanceController extends Controller
             'balances' => $balances->map(function ($balance) {
                 return [
                     'id' => $balance->id,
+                    'leave_type_id' => $balance->leave_type_id,
                     'leave_type' => $balance->leaveType->name,
                     'total_days' => $balance->total_days,
                     'used_days' => $balance->used_days,

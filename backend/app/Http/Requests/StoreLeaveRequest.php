@@ -21,7 +21,7 @@ class StoreLeaveRequest extends FormRequest
 
             'duration' => ['required', 'numeric', 'min:0.5'],
 
-            'period' => ['required', 'in:full_day,morning,afternoon'],
+            'period' => ['required', 'in:full_day,half_day'],
 
             'reason' => ['nullable', 'string'],
 

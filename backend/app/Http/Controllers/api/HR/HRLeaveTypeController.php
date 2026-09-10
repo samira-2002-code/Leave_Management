@@ -8,8 +8,9 @@ use Illuminate\Http\Request;
 
 class HRLeaveTypeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        abort_unless($request->user()->hasAnyRole(['hr', 'admin', 'employee']), 403);
         return response()->json(
             LeaveType::all()
         );
@@ -17,6 +18,7 @@ class HRLeaveTypeController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->hasAnyRole(['hr', 'admin']), 403);
         $leaveType = LeaveType::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -30,6 +32,7 @@ class HRLeaveTypeController extends Controller
 
     public function update(Request $request, LeaveType $leaveType)
     {
+        abort_unless($request->user()->hasAnyRole(['hr', 'admin']), 403);
         $leaveType->update([
             'name' => $request->name,
             'description' => $request->description,
@@ -43,6 +46,7 @@ class HRLeaveTypeController extends Controller
 
     public function destroy(LeaveType $leaveType)
     {
+        abort_unless(request()->user()->hasAnyRole(['hr', 'admin']), 403);
         $leaveType->delete();
 
         return response()->json([

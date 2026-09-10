@@ -64,7 +64,7 @@ function Requests() {
       {/* HEADER */}
 
       <header className="border-b border-black/10 px-6 md:px-10 py-6">
-        <div className="max-w-[1500px] mx-auto flex justify-between items-center">
+        <div className="max-w-375 mx-auto flex justify-between items-center">
 
           <button
             onClick={() => navigate("/dashboard")}
@@ -93,7 +93,7 @@ function Requests() {
 
       {/* MAIN */}
 
-      <main className="max-w-[1500px] mx-auto px-7 md:px-12 lg:px-20 py-16">
+      <main className="max-w-375 mx-auto px-7 md:px-12 lg:px-20 py-16">
 
         <div className="max-w-5xl">
 
@@ -183,7 +183,7 @@ function Requests() {
                     <div>
 
                       <p className="text-[9px] tracking-[0.3em] text-black/35">
-                        {request.leave_type?.name ||
+                        {request.leaveType?.name ||
                           "LEAVE REQUEST"}
                       </p>
 
@@ -226,7 +226,7 @@ function Requests() {
 
       {/* BACK */}
 
-      <div className="max-w-[1500px] mx-auto px-7 md:px-12 lg:px-20 pb-12">
+      <div className="max-w-375 mx-auto px-7 md:px-12 lg:px-20 pb-12">
 
         <button
           onClick={() => navigate("/dashboard")}

@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\HR\HREmployeeController;
 use App\Http\Controllers\Api\HR\HRLeaveRequestController;
 use App\Http\Controllers\Api\HR\HRLeaveTypeController;
 use App\Http\Controllers\Api\HR\HRLeaveBalanceController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\HR\HRReportController;
 
 
 /*
@@ -70,6 +72,11 @@ Route::middleware('auth:sanctum')->group(function () {
         'show'
     ]);
 
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
     // Approve request
     Route::patch('/leave-requests/{leaveRequest}/approve', [
         LeaveRequestController::class,
@@ -120,6 +127,11 @@ Route::middleware('auth:sanctum')->group(function () {
             HRLeaveRequestController::class,
             'show'
         ]);
+
+        Route::patch('/leave-requests/{leaveRequest}/approve', [HRLeaveRequestController::class, 'approve']);
+        Route::patch('/leave-requests/{leaveRequest}/reject', [HRLeaveRequestController::class, 'reject']);
+        Route::get('/calendar', [HRReportController::class, 'calendar']);
+        Route::get('/reports/absences.csv', [HRReportController::class, 'csv']);
 
 
         // Leave Types

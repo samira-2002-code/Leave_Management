@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\LeaveRequest;
 
 class NewLeaveRequestNotification extends Notification
 {
@@ -14,7 +15,7 @@ class NewLeaveRequestNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(public LeaveRequest $leaveRequest)
     {
         //
     }
@@ -26,7 +27,7 @@ class NewLeaveRequestNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database', 'mail'];
     }
 
     /**
@@ -35,9 +36,8 @@ class NewLeaveRequestNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+            ->subject('Nouvelle demande de congé')
+            ->line('Une demande de '.$this->leaveRequest->user->name.' nécessite votre attention.');
     }
 
     /**
@@ -48,7 +48,9 @@ class NewLeaveRequestNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'leave_request_id' => $this->leaveRequest->id,
+            'status' => $this->leaveRequest->status,
+            'message' => 'Nouvelle demande de congé à traiter.',
         ];
     }
 }

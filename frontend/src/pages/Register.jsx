@@ -133,7 +133,7 @@ function Register() {
 
       {/* HEADER */}
       <header className="px-6 md:px-10 py-6 border-b border-black/10">
-        <div className="max-w-[1500px] mx-auto flex justify-between items-center">
+        <div className="max-w-375 mx-auto flex justify-between items-center">
 
           <div>
             <p className="text-sm font-black tracking-[0.45em]">
@@ -157,7 +157,7 @@ function Register() {
 
 
       {/* MAIN */}
-      <main className="max-w-[1500px] mx-auto min-h-[calc(100vh-89px)] grid lg:grid-cols-[0.8fr_1.2fr]">
+      <main className="max-w-375 mx-auto min-h-[calc(100vh-89px)] grid lg:grid-cols-[0.8fr_1.2fr]">
 
         {/* LEFT SIDE */}
         <section className="hidden lg:flex relative border-r border-black/10 p-12 flex-col justify-between overflow-hidden">

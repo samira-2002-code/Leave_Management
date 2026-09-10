@@ -34,10 +34,11 @@ function Login() {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem(
         "user",
-        JSON.stringify(response.data.user)
+        JSON.stringify({ ...response.data.user, roles: response.data.roles || [] })
       );
 
-      navigate("/dashboard");
+      const roles = response.data.roles || [];
+      navigate(roles.includes("hr") || roles.includes("admin") ? "/hr" : roles.includes("manager") ? "/manager" : "/dashboard");
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -106,7 +107,7 @@ function Login() {
 
         <div className="flex justify-between text-[9px] tracking-[0.3em] text-white/35">
           <span>YOUR SPACE</span>
-          <span>2026 / 09</span>
+          <span>{new Date().toLocaleDateString("en-GB", { year: "numeric", month: "2-digit" }).replace("/", " / ")}</span>
         </div>
 
       </section>

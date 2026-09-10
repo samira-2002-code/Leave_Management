@@ -13,12 +13,16 @@ class AuthService
      */
     public function register(array $data): User
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'department_id' => $data['department_id'] ?? null,
         ]);
+
+        $user->assignRole('employee');
+
+        return $user;
     }
 
     /**
@@ -52,6 +56,10 @@ class AuthService
      */
     public function logout(User $user): void
     {
-        $user->currentAccessToken()?->delete();
+        $token = $user->currentAccessToken();
+
+        if ($token) {
+            $user->tokens()->whereKey($token->id)->delete();
+        }
     }
 }

@@ -12,37 +12,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
-const leaveTypes = [
-  {
-    id: 1,
-    name: "Congés payés",
-    label: "REST",
-    description: "Take time to recharge.",
-    symbol: "○",
-  },
-  {
-    id: 2,
-    name: "Congé maladie",
-    label: "HEALTH",
-    description: "Time to recover.",
-    symbol: "△",
-  },
-  {
-    id: 3,
-    name: "Autorisation d’absence",
-    label: "PERSONAL",
-    description: "A short absence from work.",
-    symbol: "□",
-  },
-  {
-    id: 4,
-    name: "Congé exceptionnel",
-    label: "OTHER",
-    description: "For exceptional circumstances.",
-    symbol: "◇",
-  },
-];
-
 function LeaveRequest() {
   const navigate = useNavigate();
 
@@ -61,6 +30,7 @@ function LeaveRequest() {
   });
 
   const [balances, setBalances] = useState([]);
+  const [leaveTypes, setLeaveTypes] = useState([]);
   const [loadingBalances, setLoadingBalances] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -73,9 +43,13 @@ function LeaveRequest() {
   useEffect(() => {
     const loadBalances = async () => {
       try {
-        const response = await api.get("/leave-balances");
+        const [balanceResponse, typeResponse] = await Promise.all([
+          api.get("/leave-balances"),
+          api.get("/hr/leave-types"),
+        ]);
 
-        setBalances(response.data.balances || []);
+        setBalances(balanceResponse.data.balances || []);
+        setLeaveTypes(typeResponse.data || []);
       } catch (err) {
         console.error("BALANCE ERROR:", err);
 
@@ -99,14 +73,14 @@ function LeaveRequest() {
     return leaveTypes.find(
       (type) => String(type.id) === String(form.leave_type_id)
     );
-  }, [form.leave_type_id]);
+  }, [form.leave_type_id, leaveTypes]);
 
   const selectedBalance = useMemo(() => {
     if (!selectedType) return null;
 
     return balances.find(
       (balance) =>
-        String(balance.id) === String(selectedType.id)
+        String(balance.leave_type_id) === String(selectedType.id)
     );
   }, [balances, selectedType]);
 
@@ -123,10 +97,10 @@ function LeaveRequest() {
     const end = new Date(form.end_date);
 
     if (end < start) {
-      setForm((previous) => ({
+      Promise.resolve().then(() => setForm((previous) => ({
         ...previous,
         duration: 1,
-      }));
+      })));
 
       return;
     }
@@ -142,10 +116,10 @@ function LeaveRequest() {
       duration = difference - 0.5;
     }
 
-    setForm((previous) => ({
+    Promise.resolve().then(() => setForm((previous) => ({
       ...previous,
       duration: Math.max(duration, 0.5),
-    }));
+    })));
   }, [
     form.start_date,
     form.end_date,
@@ -291,7 +265,7 @@ function LeaveRequest() {
 
       <header className="border-b border-black/10 px-6 md:px-10 py-6">
 
-        <div className="max-w-[1500px] mx-auto flex items-center justify-between">
+        <div className="max-w-375 mx-auto flex items-center justify-between">
 
           <button
             onClick={() => navigate("/dashboard")}
@@ -325,7 +299,7 @@ function LeaveRequest() {
 
       {/* MAIN */}
 
-      <main className="max-w-[1500px] mx-auto min-h-[calc(100vh-90px)] grid lg:grid-cols-[0.65fr_1.35fr]">
+      <main className="max-w-375 mx-auto min-h-[calc(100vh-90px)] grid lg:grid-cols-[0.65fr_1.35fr]">
 
 
         {/* LEFT */}
@@ -443,7 +417,7 @@ function LeaveRequest() {
                         })
                       }
                       className={`
-                        text-left p-7 min-h-[170px]
+                        text-left p-7 min-h-42.5
                         transition-all
                         ${
                           String(form.leave_type_id) ===

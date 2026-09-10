@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLeaveRequest;
-use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
 use App\Services\LeaveRequestService;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +20,7 @@ class LeaveRequestController extends Controller
         $user = $request->user();
 
         // Manager / Admin → voir toutes les demandes
-        if ($user->hasAnyRole(['Manager', 'Admin'])) {
+        if ($user->hasAnyRole(['manager', 'admin'])) {
             $requests = LeaveRequest::with([
                 'leaveType',
                 'user.department',
@@ -75,41 +74,20 @@ class LeaveRequestController extends Controller
         Request $request,
         LeaveRequest $leaveRequest
     ): JsonResponse {
-        if ($leaveRequest->status !== 'pending') {
-            return response()->json([
-                'message' => 'Cette demande a déjà été traitée.',
-            ], 422);
+        if ($leaveRequest->status === 'pending_manager' && !$request->user()->hasAnyRole(['manager', 'admin'])) {
+            return response()->json(['message' => 'Seul un manager peut valider cette étape.'], 403);
         }
 
-        $balance = LeaveBalance::where('user_id', $leaveRequest->user_id)
-            ->where('leave_type_id', $leaveRequest->leave_type_id)
-            ->first();
-
-        if (!$balance) {
-            return response()->json([
-                'message' => 'Solde introuvable.',
-            ], 422);
+        if ($leaveRequest->status === 'pending_hr' && !$request->user()->hasAnyRole(['hr', 'admin'])) {
+            return response()->json(['message' => 'Seul le RH peut valider cette étape.'], 403);
         }
 
-        if ($balance->remaining_days < $leaveRequest->duration) {
-            return response()->json([
-                'message' => 'Solde insuffisant.',
-            ], 422);
-        }
-
-        $balance->increment(
-            'used_days',
-            $leaveRequest->duration
-        );
-
-        $leaveRequest->update([
-            'status' => 'approved',
-        ]);
+        $targetStatus = $leaveRequest->status === 'pending_manager' ? 'pending_hr' : 'approved';
+        $updatedRequest = $this->leaveRequestService->transition($leaveRequest, $request->user(), $targetStatus);
 
         return response()->json([
             'message' => 'Demande approuvée avec succès.',
-            'request' => $leaveRequest->fresh()->load('leaveType'),
-            'remaining_days' => $balance->fresh()->remaining_days,
+            'request' => $updatedRequest,
         ]);
     }
 
@@ -117,19 +95,26 @@ class LeaveRequestController extends Controller
         Request $request,
         LeaveRequest $leaveRequest
     ): JsonResponse {
-        if ($leaveRequest->status !== 'pending') {
-            return response()->json([
-                'message' => 'Cette demande a déjà été traitée.',
-            ], 422);
+        $request->validate(['rejection_reason' => ['required', 'string', 'max:1000']]);
+
+        if ($leaveRequest->status === 'pending_manager' && !$request->user()->hasAnyRole(['manager', 'admin'])) {
+            return response()->json(['message' => 'Seul un manager peut refuser cette demande.'], 403);
         }
 
-        $leaveRequest->update([
-            'status' => 'rejected',
-        ]);
+        if ($leaveRequest->status === 'pending_hr' && !$request->user()->hasAnyRole(['hr', 'admin'])) {
+            return response()->json(['message' => 'Seul le RH peut refuser cette demande.'], 403);
+        }
+
+        $updatedRequest = $this->leaveRequestService->transition(
+            $leaveRequest,
+            $request->user(),
+            'rejected',
+            $request->input('rejection_reason')
+        );
 
         return response()->json([
             'message' => 'Demande rejetée.',
-            'request' => $leaveRequest->fresh()->load('leaveType'),
+            'request' => $updatedRequest,
         ]);
     }
 }

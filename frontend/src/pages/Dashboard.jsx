@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-    ArrowUpRight,
     ArrowRight,
     ChevronLeft,
     ChevronRight,
     CircleUserRound,
-    LogOut,
     Sparkles,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 const months = [
     "JAN",
@@ -29,20 +28,43 @@ const months = [
 
 const weekDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-const leaveHistory = [
-    { month: 1, days: 2, type: "REST" },
-    { month: 3, days: 1, type: "PERSONAL" },
-    { month: 5, days: 3, type: "REST" },
-    { month: 7, days: 2, type: "HEALTH" },
-    { month: 8, days: 1, type: "PERSONAL" },
-];
-
 function Dashboard() {
-    const [currentMonth, setCurrentMonth] = useState(8);
+    const today = useMemo(() => new Date(), []);
+    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
     const [selectedDay, setSelectedDay] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [balances, setBalances] = useState([]);
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const year = 2026;
+    const year = today.getFullYear();
+
+    useEffect(() => {
+        Promise.all([
+            api.get("/auth/profile"),
+            api.get("/leave-balances"),
+            api.get("/leave-requests"),
+        ]).then(([profileResponse, balancesResponse, requestsResponse]) => {
+            setProfile({ ...profileResponse.data.user, roles: profileResponse.data.roles || [] });
+            setBalances(balancesResponse.data.balances || []);
+            setRequests(requestsResponse.data.requests || []);
+        }).catch((requestError) => {
+            setError(requestError.response?.data?.message || "Impossible de charger votre espace.");
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const availableDays = balances.reduce((total, balance) => total + Number(balance.remaining_days || 0), 0);
+    const leaveHistory = useMemo(() => requests.reduce((history, request) => {
+        if (request.status !== "approved") return history;
+        const month = new Date(request.start_date).getMonth() + 1;
+        const existing = history.find((item) => item.month === month);
+        if (existing) existing.days += Number(request.duration || 0);
+        else history.push({ month, days: Number(request.duration || 0) });
+        return history;
+    }, []), [requests]);
+    const nextBreak = useMemo(() => requests.filter((request) => new Date(request.start_date) >= today && ["approved", "pending_manager", "pending_hr"].includes(request.status)).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0], [requests, today]);
 
     const firstDay = new Date(year, currentMonth, 1);
     let startDay = firstDay.getDay();
@@ -81,7 +103,7 @@ function Dashboard() {
             {/* TOP NAV */}
             <header className="px-6 md:px-10 py-6 border-b border-black/10">
 
-                <div className="max-w-[1500px] mx-auto flex justify-between items-center">
+                <div className="max-w-375 mx-auto flex justify-between items-center">
 
                     <div>
                         <div className="font-black tracking-[0.45em] text-sm">
@@ -96,12 +118,10 @@ function Dashboard() {
                     <div className="flex items-center gap-5">
 
                         <div className="hidden md:block text-right">
-                            <p className="text-xs font-bold">
-                                SAMIRA ASSEMLALI
-                            </p>
+                            <p className="text-xs font-bold">{profile?.name || "COLLABORATEUR"}</p>
 
                             <p className="text-[9px] tracking-widest text-black/40">
-                                COLLABORATOR
+                                {profile?.roles?.[0] || "EMPLOYEE"}
                             </p>
                         </div>
 
@@ -110,7 +130,7 @@ function Dashboard() {
                             strokeWidth={1.3}
                         />
 
-                        <button className="hidden md:block text-[9px] tracking-[0.25em]">
+                        <button onClick={async () => { await api.post("/auth/logout"); localStorage.clear(); navigate("/login"); }} className="hidden md:block text-[9px] tracking-[0.25em]">
                             LOG OUT
                         </button>
 
@@ -120,7 +140,7 @@ function Dashboard() {
 
             </header>
 
-            <main className="max-w-[1500px] mx-auto px-6 md:px-10 py-10">
+            <main className="max-w-375 mx-auto px-6 md:px-10 py-10">
 
                 {/* HERO */}
                 <section className="grid lg:grid-cols-[1.2fr_0.8fr] gap-10 items-end">
@@ -128,7 +148,7 @@ function Dashboard() {
                     <div>
 
                         <p className="text-[10px] tracking-[0.5em] text-black/40 mb-5">
-                            THURSDAY / 03 SEPTEMBER / 2026
+                            {today.toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).toUpperCase()}
                         </p>
 
                         <h1 className="text-[clamp(4rem,10vw,10rem)] leading-[0.78] tracking-[-0.08em] font-black">
@@ -155,7 +175,7 @@ function Dashboard() {
                                 </span>
 
                                 <span className="text-6xl font-black tracking-[-0.07em] mt-2">
-                                    18.5
+                                    {loading ? "—" : availableDays}
                                 </span>
 
                                 <span className="text-[9px] tracking-[0.35em] text-white/50">
@@ -183,7 +203,7 @@ function Dashboard() {
                             </p>
 
                             <h2 className="text-2xl font-black mt-2">
-                                TIME MAP / 2026
+                                TIME MAP / {year}
                             </h2>
                         </div>
 
@@ -213,7 +233,7 @@ function Dashboard() {
 
                                         {history && (
                                             <div
-                                                className="absolute bottom-2 w-[3px] bg-black"
+                                                className="absolute bottom-2 w-0.75 bg-black"
                                                 style={{
                                                     height: `${history.days * 9}px`,
                                                 }}
@@ -303,7 +323,7 @@ function Dashboard() {
                                 </p>
 
                                 <h2 className="text-2xl font-black mt-2">
-                                    {months[currentMonth]} 2026
+                                    {months[currentMonth]} {year}
                                 </h2>
                             </div>
 
@@ -346,8 +366,7 @@ function Dashboard() {
 
                                 {calendarDays.map((day, index) => {
 
-                                    const isToday =
-                                        currentMonth === 8 && day === 3;
+                                    const isToday = currentMonth === today.getMonth() && day === today.getDate();
 
                                     const isSelected =
                                         selectedDay === day;
@@ -402,13 +421,9 @@ function Dashboard() {
 
                         <div className="flex items-center gap-5 mt-3">
 
-                            <span className="text-4xl font-black">
-                                10—12
-                            </span>
+                                <span className="text-4xl font-black">{nextBreak ? `${nextBreak.start_date}—${nextBreak.end_date}` : "—"}</span>
 
-                            <span className="text-xs tracking-[0.3em]">
-                                SEPTEMBER
-                            </span>
+                            <span className="text-xs tracking-[0.3em]">{nextBreak?.leaveType?.name || "NO UPCOMING LEAVE"}</span>
 
                         </div>
 
@@ -433,6 +448,8 @@ function Dashboard() {
                         VIEW YOUR REQUESTS →
                     </button>
                 </section>
+
+                {error && <p className="mt-6 border-l-2 border-black pl-4 text-sm">{error}</p>}
 
             </main>
 
